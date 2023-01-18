@@ -24,17 +24,6 @@ find_package(xxHash 0.8.0 REQUIRED COMPONENTS xxhash PATHS ${LIBS_DIR}/xxHash)
 find_package(UUtils 1.1.1 REQUIRED PATHS ${LIBS_DIR}/UUtils)
 find_package(UDBM 2.0.11 REQUIRED PATHS ${LIBS_DIR}/UDBM)
 
-include_directories(
-    PRIVATE
-        # where the library itself will look for its internal headers
-        ${CMAKE_BINARY_DIR}/include
-    PUBLIC
-        # where top-level project will look for the library's public headers
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        # where external projects will look for the library's public headers
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-
 if(STATIC)
     # The project does not use neither threads nor networking, but
     # wsock32, ws2_32 and winpthread seem to be important for self-contained static binary
