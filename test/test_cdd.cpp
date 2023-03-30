@@ -351,6 +351,83 @@ static void test_remove_negative(size_t size)
     REQUIRE(cdd4 != cdd3);
 }
 
+
+int strict(int inputNumber) { return inputNumber * 2; }
+
+int nstrict(int inputNumber) { return inputNumber * 2 + 1; }
+
+
+static void test_cdd_trivial_expr(size_t size)
+{
+    //size = 3;
+    cdd cdd_test;
+
+    auto dbm_test = dbm_wrap{size};
+
+    // Generate DBMs:
+    dbm_test.generate();
+
+    // Create CDDs:
+    cdd_test = cdd(dbm_test.raw(), size);
+
+    int bound1 = RANGE();
+    int bound2 = RANGE();
+    int low = ((bound1 >= bound2) ? bound1 : bound2) * -1;
+    int up = ((bound1 >= bound2) ? bound2 : bound1) * -1;
+    //cdd1 = cdd_interval(1, 0, low, up);
+    //cdd false_guard = cdd(cdd_upper(1, 0, strict(0))); // i - j <= bound ----- Should always be false
+    cdd false_guard = cdd(cdd_interval(1, 0, strict(0), INF)); // i - j <= bound ----- Should always be false
+    //cdd true_guard = cdd(cdd_upper(0, 1, nstrict(0))); //True
+    cdd true_guard = cdd(cdd_lower(1, 0, nstrict(0))); // bound <~ i - j <=> j - i < bound ----- Should always be true
+    //cdd true_guard = cdd(cdd_interval(1, 0, -INF,  nstrict(0))); // bound <~ i - j <=> j - i < bound ----- Should always be true
+
+    /*
+    const int num_bools = 1;
+    const int num_clocks = 1;
+    int clock_num = (uniform(1, size - 1));  // So we don't select the zero clock
+    int arr[num_clocks] = {clock_num};
+    int* clockPtr = arr;
+    int arr1[num_clocks] = {0};  // Always reset to 0 in this test case.
+    int* clock_values = arr1;
+    int arr2[num_bools] = {uniform(0, size - 1) + bdd_start_level};
+    int* boolPtr = arr2;
+    int arr3[num_bools] = {0};  // Always reset to false in this test case.
+    int* bool_values = arr3;
+
+    // Take the transition.
+    cdd result1 = cdd_transition(cdd_test, guard, nullptr, clock_values, num_clocks, nullptr, nullptr, 0);
+
+    cdd* cdd_result = new cdd(cdd_reduce(result1));
+*/
+
+    //REQUIRE(cdd_equiv(cdd_test, *cdd_result));
+    //cdd_printdot(guard, true);
+    //cdd_printdot(false_guard, false);
+    cdd_printdot(true_guard, true);
+    //cdd_printdot(guard, true);
+    //cdd_printdot(cdd_reduce(false_guard), false);
+    cdd_printdot(cdd_reduce(true_guard), true);
+    cdd_printdot(cdd_remove_negative(true_guard), true);
+    cdd_printdot(cdd_reduce(cdd_remove_negative(true_guard)), true);
+    //cdd_printdot(cdd_remove_negative(guard), false);
+    //cdd_printdot(cdd_true(), false);
+    //cdd_printdot(cdd_reduce(guard), true);
+    //cdd_printdot(cdd_reduce(guard), false);
+    //cdd_printdot(cdd_remove_negative(guard), false);
+
+    //cdd_printdot(cdd_extract_bdd(true_guard, size), false);
+
+    REQUIRE(cdd_equiv(cdd_reduce(true_guard), true_guard));
+
+    //REQUIRE(cdd_isterminal((ddNode*) &false_guard));
+    //REQUIRE(cdd_isterminal((ddNode*) &true_guard));
+    //REQUIRE(cdd_equiv(cdd_false(), cdd_reduce(false_guard)));
+    // Check the result.
+    //REQUIRE(cdd_equiv(result1, result1 & guard));
+    //REQUIRE(cdd_equiv(cdd_false(), result1 & !guard));
+    REQUIRE(false);
+}
+
 static void test_equiv(size_t size)
 {
     cdd cdd1, cdd2, cdd3, cdd4;
@@ -370,10 +447,6 @@ static void test_equiv(size_t size)
     // Check the result:
     REQUIRE(cdd_equiv(cdd3, cdd4));
 }
-
-int strict(int inputNumber) { return inputNumber * 2; }
-
-int nstrict(int inputNumber) { return inputNumber * 2 + 1; }
 
 void test_delay(size_t size)
 {
@@ -1066,4 +1139,14 @@ TEST_CASE("Big CDD test")
     SUBCASE("Size 3") { big_test(3); }
     SUBCASE("Size 10") { big_test(10); }
 #endif /* 32-bit */
+}
+
+TEST_CASE("CDD reduce trivial true")
+{
+    cdd_init(100000, 10000, 10000);
+    int size = 2;
+    cdd_add_clocks(size);
+    test_cdd_trivial_expr(size);
+    //test_intersection(3);
+    cdd_done();
 }
